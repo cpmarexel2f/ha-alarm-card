@@ -12,6 +12,10 @@ The cards work with any [alarm control panel](https://www.home-assistant.io/inte
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=juju35&repository=ha-alarm-card&category=plugin)
 
+| Alarm Card | Alarm Mini Card |
+|---|---|
+| ![alarm-card](https://raw.githubusercontent.com/juju35/ha-alarm-card/main/screenshots/card.png) | ![alarm-mini-card](https://raw.githubusercontent.com/juju35/ha-alarm-card/main/screenshots/mini-card.png) |
+
 ## Features
 
 - Two cards: a full **Alarm Card** and a compact **Alarm Mini Card**
@@ -124,6 +128,25 @@ zoom: true
 | `collapsed` | full | `false` | Fold the sensors section by default (click its title to unfold it) |
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options) and switches back; `false` removes it |
 | `language` | both | Auto | Force language: `fr` or `en` (auto-detects from HA settings) |
+
+## Screenshots
+
+| Light | Dark (French, arming: exit delay countdown) |
+|---|---|
+| ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
+| ![mini card](screenshots/mini-card.png) | ![mini card dark](screenshots/mini-card-dark.png) |
+
+| Armed away (French) | Triggered (dark) |
+|---|---|
+| ![card armed](screenshots/card-armed.png) | ![card triggered](screenshots/card-triggered.png) |
+
+Code pad (panel with a number code):
+
+![code pad](screenshots/card-code.png)
+
+Mini card zoomed in with its detail button (top right, click it again or anywhere outside the card to go back):
+
+![mini card zoomed in](screenshots/mini-card-zoom.png)
 
 ## How it works
 
