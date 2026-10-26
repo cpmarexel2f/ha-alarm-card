@@ -131,6 +131,12 @@ zoom: true
 
 ## Screenshots
 
+The shield animates with the panel's state: it flashes while the alarm is triggered and pulses while arming (and during the entry delay). It settles to a still card once disarmed, and honours `prefers-reduced-motion`.
+
+![shield flashing while triggered](screenshots/triggered.gif)
+
+![shield pulsing while arming](screenshots/arming.gif)
+
 | Light | Dark (arming: exit delay countdown) |
 |---|---|
 | ![card](screenshots/card.png) | ![card dark](screenshots/card-dark.png) |
@@ -163,7 +169,7 @@ npm install
 npm run build        # bundles src/alarm-card.js into dist/alarm-card.js
 npm run check        # builds and checks the card (run in CI)
 npm test             # unit tests (node --test)
-npm run screenshots  # renders the cards with mock data (scripts/mock-states.mjs) into screenshots/
+npm run screenshots  # renders the cards with mock data (scripts/mock-states.mjs) into screenshots/ (and the triggered/arming GIFs, needs ffmpeg)
 ```
 
 `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built file to the release, which is where HACS downloads it from.
