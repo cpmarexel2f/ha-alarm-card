@@ -352,14 +352,17 @@ const morph = (root, html) => {
   patchChildren(root, tpl.content);
 };
 
-// Card logo: a shield with a keyhole.
+// Card logo: a red shield sending out radar waves, on a slate background light enough to stand out on a dark
+// theme.
 const logo = () => `<svg class="logo" viewBox="0 0 48 48" role="img" aria-label="Alarm">
   <defs><linearGradient id="al-logo" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#ff6b6b"/><stop offset="1" stop-color="#c92a3a"/>
+    <stop offset="0" stop-color="#56607a"/><stop offset="1" stop-color="#2f3644"/>
   </linearGradient></defs>
   <rect width="48" height="48" rx="12" fill="url(#al-logo)"/>
-  <path d="M24 8 11 13.5v9c0 8.3 5.5 15.4 13 17.5 7.5-2.1 13-9.2 13-17.5v-9Z" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="24" cy="22" r="3.6" fill="#fff"/><path d="M22.2 24.5h3.6l1 7.5h-5.6Z" fill="#fff"/>
+  <path d="M24 8 11 13.5v9c0 8.3 5.5 15.4 13 17.5 7.5-2.1 13-9.2 13-17.5v-9Z" fill="none" stroke="#ff5a5f" stroke-width="2.6" stroke-linejoin="round"/>
+  <circle cx="24" cy="24" r="2.6" fill="#ff5a5f"/>
+  <path d="M20.3 20.3a5.2 5.2 0 0 0 0 7.4M27.7 20.3a5.2 5.2 0 0 1 0 7.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17.2 17.2a9.6 9.6 0 0 0 0 13.6M30.8 17.2a9.6 9.6 0 0 1 0 13.6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
 </svg>`;
 
 // Big state shield of the full card (and the small one of the mini card): pulses while a delay runs, flashes

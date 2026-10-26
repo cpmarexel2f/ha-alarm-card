@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1
+
+### Changes
+- New card logo: a red shield sending out radar waves on a slate background, lighter so that it stands out on dark themes.
+
+### Maintenance
+- Screenshots regenerated.
+
 ## 1.0.0
 
 ### Changes
