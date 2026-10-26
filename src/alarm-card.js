@@ -352,18 +352,14 @@ const morph = (root, html) => {
   patchChildren(root, tpl.content);
 };
 
-// Card logo: a red shield sending out radar waves, on a slate background light enough to stand out on a dark
-// theme.
-const logo = () => `<svg class="logo" viewBox="0 0 48 48" role="img" aria-label="Alarm">
-  <defs><linearGradient id="al-logo" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#56607a"/><stop offset="1" stop-color="#2f3644"/>
-  </linearGradient></defs>
-  <rect width="48" height="48" rx="12" fill="url(#al-logo)"/>
-  <path d="M24 8 11 13.5v9c0 8.3 5.5 15.4 13 17.5 7.5-2.1 13-9.2 13-17.5v-9Z" fill="none" stroke="#ff5a5f" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="24" cy="24" r="2.6" fill="#ff5a5f"/>
-  <path d="M20.3 20.3a5.2 5.2 0 0 0 0 7.4M27.7 20.3a5.2 5.2 0 0 1 0 7.4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-  <path d="M17.2 17.2a9.6 9.6 0 0 0 0 13.6M30.8 17.2a9.6 9.6 0 0 1 0 13.6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
-</svg>`;
+// Card logo: a shield sending out radar waves, drawn in the accent color on a round tinted badge like the other
+// ha-* cards.
+const logo = () => `<div class="badge"><svg class="icon" viewBox="6 6 36 36" role="img" aria-label="Alarm">
+  <path d="M24 8 11 13.5v9c0 8.3 5.5 15.4 13 17.5 7.5-2.1 13-9.2 13-17.5v-9Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+  <circle cx="24" cy="24" r="2.6"/>
+  <path d="M20.3 20.3a5.2 5.2 0 0 0 0 7.4M27.7 20.3a5.2 5.2 0 0 1 0 7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17.2 17.2a9.6 9.6 0 0 0 0 13.6M30.8 17.2a9.6 9.6 0 0 1 0 13.6" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+</svg></div>`;
 
 // Big state shield of the full card (and the small one of the mini card): pulses while a delay runs, flashes
 // when the alarm goes off.
@@ -387,8 +383,10 @@ const BASE_STYLE = `
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c); flex: none; display: inline-block; }
   .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap;
           background: color-mix(in srgb, var(--c, var(--al-off)) 15%, transparent); color: var(--c, var(--al-off)); flex: none; }
-  .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 4px; }
-  .logo { height: 40px; width: 40px; flex: none; }
+  .header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 0; }
+  .badge { --c: var(--al-accent); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none;
+           background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+  .badge .icon { width: 24px; height: 24px; }
   .titles { flex: 1; min-width: 0; }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -415,8 +413,8 @@ const BASE_STYLE = `
          color: var(--primary-text-color); min-width: 0; }
   .btn:hover { background: color-mix(in srgb, var(--c, var(--al-accent)) 14%, var(--secondary-background-color, rgba(127,127,127,.12))); }
   .btn .icon { width: 18px; height: 18px; color: var(--c, var(--primary-text-color)); }
-  .btn.primary { background: var(--c, var(--al-accent)); color: #fff; }
-  .btn.primary .icon { color: #fff; }
+  .btn.primary { background: color-mix(in srgb, var(--c, var(--al-accent)) 16%, transparent); color: var(--c, var(--al-accent)); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--c, var(--al-accent)) 24%, transparent); }
   .btn.round { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
   .btn.disabled { opacity: .45; cursor: default; }
   .pad { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--divider-color, rgba(127,127,127,.25)); }
@@ -875,11 +873,11 @@ class AlarmBase extends HTMLElement {
 // ---------------------------------------------------------------------------
 
 const FULL_STYLE = `
-  .content { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .content { padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 12px; }
   .hero { display: flex; align-items: center; gap: 14px; }
   .hero .shield { width: 72px; height: 72px; }
   .hero .shield .icon { width: 40px; height: 40px; }
-  .state { font-size: 20px; font-weight: 400; line-height: 1.2; color: var(--c); }
+  .state { font-size: 22px; font-weight: 400; line-height: 1.2; color: var(--c); }
   .modes { display: flex; flex-wrap: wrap; gap: 6px; }
   .modes .btn { flex: 1 1 auto; }
   .section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase;
@@ -987,14 +985,16 @@ class AlarmCard extends AlarmBase {
 
 const MINI_STYLE = `
   .header { padding: 12px; }
-  .header .shield { width: 40px; height: 40px; }
-  .header .shield .icon { width: 24px; height: 24px; }
+  .header.with-pad { padding-bottom: 0; }
+  .header .titles { margin-block: -2px; }
+  .header .badge, .header .shield { width: 32px; height: 32px; }
+  .header .badge .icon, .header .shield .icon { width: 20px; height: 20px; }
   .sub .st { color: var(--c); font-weight: 500; }
   .sub .dot { margin-right: 4px; vertical-align: 1px; }
   .controls { display: flex; gap: 6px; flex: none; }
   .controls .btn.round { width: 32px; height: 32px; }
   .controls .btn .icon { width: 16px; height: 16px; }
-  .pad-wrap { padding: 0 12px 12px; }
+  .pad-wrap { padding: 8px 12px 12px; }
 `;
 
 // The mini card is a full card drawn compact: its detail button (top right, `zoom: false` removes it) switches
@@ -1058,7 +1058,7 @@ class AlarmMiniCard extends AlarmCard {
     const cls = stateClass(st.state);
     return `<style>${BASE_STYLE}${MINI_STYLE}</style>
       <ha-card>
-        <div class="header">
+        <div class="header${this._pad ? " with-pad" : ""}">
           ${c.show_logo !== false ? logo() : `<div class="clickable" role="button" tabindex="0" data-entity="${esc(st.entity_id)}">${shield(st.state)}</div>`}
           <div class="titles">
             <div class="name">${esc(c.title || st.attributes?.friendly_name || this._t("title"))}</div>
