@@ -1,7 +1,6 @@
 # Changelog
 
-## Unreleased
-
+## 1.1.0
 ### Changes
 - Header logo on a round tinted badge (40 px, 32 px on the mini card) in the card's accent color, like the other ha-* cards; the mini card's state shield (`show_logo: false`) is 32 px too.
 - Active and confirm buttons (the current arm mode, Disarm while triggered, OK in the code pad and the confirmation popup) are tinted with their color instead of filled, like the other ha-* cards.
