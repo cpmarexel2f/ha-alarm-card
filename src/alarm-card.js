@@ -986,11 +986,14 @@ class AlarmCard extends AlarmBase {
 // ---------------------------------------------------------------------------
 
 const MINI_STYLE = `
-  .content { padding: 4px 12px 12px; display: flex; align-items: center; gap: 12px; }
-  .content .shield { width: 44px; height: 44px; }
-  .content .shield .icon { width: 26px; height: 26px; }
-  .state { font-size: 15px; font-weight: 500; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header { padding: 12px; }
+  .header .shield { width: 40px; height: 40px; }
+  .header .shield .icon { width: 24px; height: 24px; }
+  .sub .st { color: var(--c); font-weight: 500; }
+  .sub .dot { margin-right: 4px; vertical-align: 1px; }
   .controls { display: flex; gap: 6px; flex: none; }
+  .controls .btn.round { width: 32px; height: 32px; }
+  .controls .btn .icon { width: 16px; height: 16px; }
   .pad-wrap { padding: 0 12px 12px; }
 `;
 
@@ -1045,24 +1048,41 @@ class AlarmMiniCard extends AlarmCard {
     if (ev.detail === 0) this.shadowRoot.querySelector?.(".zoom")?.focus();
   }
 
+  // Compact view: a single row, the state in color under the name (with the countdown, or the open sensor
+  // when the alarm goes off), the round arm / disarm buttons and the detail button.
   _render() {
     if (this._zoomed) return super._render();
     const { st, error } = this._panelOrError();
     if (error) return error;
     const c = this._config;
+    const cls = stateClass(st.state);
     return `<style>${BASE_STYLE}${MINI_STYLE}</style>
       <ha-card>
-        ${this._header(st)}
-        <div class="content ${stateClass(st.state)}">
-          <div class="clickable" role="button" tabindex="0" data-entity="${esc(st.entity_id)}">${shield(st.state)}</div>
-          <div class="info">
-            <div class="state">${esc(this._stateText(st))}</div>
-            ${this._lines(st, false)}
+        <div class="header">
+          ${c.show_logo !== false ? logo() : `<div class="clickable" role="button" tabindex="0" data-entity="${esc(st.entity_id)}">${shield(st.state)}</div>`}
+          <div class="titles">
+            <div class="name">${esc(c.title || st.attributes?.friendly_name || this._t("title"))}</div>
+            <div class="sub clickable" role="button" tabindex="0" data-entity="${esc(st.entity_id)}"><span class="st ${cls}"><span class="dot"></span>${esc(
+              this._stateText(st)
+            )}</span>${esc(this._miniDetail(st))}</div>
           </div>
           ${c.show_controls !== false ? `<div class="controls">${this._modeButtons(st, true)}</div>` : ""}
+          ${this._zoomButton()}
         </div>
         ${this._pad ? `<div class="pad-wrap">${this._padHtml(st)}</div>` : ""}
       </ha-card>`;
+  }
+
+  // What follows the state: " · 30 s" during a delay, " · Kitchen window" for the open sensor while the
+  // alarm goes off, else " · for 27 min".
+  _miniDetail(st) {
+    const rem = remaining(st);
+    if (rem) return ` · ${fmtCountdown(rem.left)}`;
+    const open = entityList(st.attributes?.open_sensors);
+    if (open.length && /^(triggered|pending)$/.test(st.state)) return ` · ${open.map((id) => this._sensorName(id)).join(", ")}`;
+    const since = (Date.now() - Date.parse(st.last_changed)) / 1000;
+    if (!Number.isFinite(since)) return "";
+    return ` · ${since < 60 ? this._t("just_now") : this._t("since", { d: fmtDuration(since, (k) => this._t(k)) })}`;
   }
 }
 

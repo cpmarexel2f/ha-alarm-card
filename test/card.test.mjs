@@ -181,6 +181,19 @@ test("the sensors section folds and unfolds", () => {
   assert.match(card.shadowRoot.innerHTML, /class="tiles"/);
 });
 
+test("the mini card fits on one row: state, countdown and buttons in the header", () => {
+  const card = newCard(makeHass(arming), { language: "fr" }, al.AlarmMiniCard);
+  const html = card.shadowRoot.innerHTML;
+  assert.equal((html.match(/class="header"/g) || []).length, 1);
+  assert.doesNotMatch(html, /class="content/);
+  assert.match(html, /Armement<\/span> · 4\d s/);
+  assert.match(html, /class="controls"/);
+  const trig = newCard(makeHass(triggered), {}, al.AlarmMiniCard);
+  assert.match(trig.shadowRoot.innerHTML, /Triggered<\/span> · Fenêtre cuisine/);
+  const noLogo = newCard(makeHass(), { show_logo: false }, al.AlarmMiniCard);
+  assert.match(noLogo.shadowRoot.innerHTML, /class="shield off"/);
+});
+
 test("French strings", () => {
   const card = newCard(makeHass(arming), { language: "fr" });
   assert.match(card.shadowRoot.innerHTML, /Armement/);

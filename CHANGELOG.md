@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+### Changes
+- Mini card on a single row: the state shows in color under the name (with the exit / entry delay countdown, or the open sensor when the alarm goes off), next to the round arm / disarm buttons and the detail button. No more state pill and state line repeating each other. With `show_logo: false`, the state shield takes the logo's place.
+
+### Maintenance
+- Test for the compact layout (18 in all); screenshots regenerated.
+
 ## 1.0.1
 
 ### Changes

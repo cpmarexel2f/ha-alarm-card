@@ -18,7 +18,7 @@ The cards work with any [alarm control panel](https://www.home-assistant.io/inte
 
 ## Features
 
-- Two cards: a full **Alarm Card** and a compact **Alarm Mini Card**
+- Two cards: a full **Alarm Card** and a compact, single-row **Alarm Mini Card** (state, countdown and one-tap buttons)
 - Detail button at the top right of the mini card: it switches to the full card and back; a click anywhere outside the card brings the compact view back
 - State shield colored by state and mode (disarmed, home, away, night, vacation, custom), pulsing during the exit / entry delay, flashing when the alarm goes off
 - One button per supported arm mode, and Disarm (Cancel during the exit delay)
