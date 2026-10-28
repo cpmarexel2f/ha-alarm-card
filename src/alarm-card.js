@@ -504,21 +504,32 @@ class AlarmBase extends HTMLElement {
     };
   }
 
-  // Durations move with the clock: a render check every second (cheap: the signature only changes on the
-  // second while a delay counts down, on the minute otherwise).
+  // Durations move with the clock: a render check every second while a delay counts down (the signature
+  // changes on the second), every minute otherwise (it only changes on the minute).
   connectedCallback() {
-    clearInterval(this._timer);
-    this._timer = setInterval(() => {
-      if (this._hass) this.hass = this._hass;
-    }, 1000);
+    this._startClock();
     document.addEventListener("click", this._onOutside, true);
     if (this._confirm || this._pad) window.addEventListener("keydown", this._onKey);
   }
 
   disconnectedCallback() {
     clearInterval(this._timer);
+    this._timer = null;
+    this._timerPeriod = null;
     document.removeEventListener("click", this._onOutside, true);
     window.removeEventListener("keydown", this._onKey);
+  }
+
+  // (Re)arm the render clock at the pace the current state needs. State changes themselves arrive through
+  // `set hass`, which re-renders and brings the clock back here, so each pace switch follows the state.
+  _startClock() {
+    const period = this._hass && this._config && remaining(this._panel()) ? 1000 : 60000;
+    if (this._timer && this._timerPeriod === period) return;
+    clearInterval(this._timer);
+    this._timerPeriod = period;
+    this._timer = setInterval(() => {
+      if (this._hass) this.hass = this._hass;
+    }, period);
   }
 
   set hass(hass) {
@@ -537,6 +548,7 @@ class AlarmBase extends HTMLElement {
     if (!config) throw new Error("Invalid configuration");
     if (config.sensors !== undefined && !Array.isArray(config.sensors)) throw new Error("sensors must be a list");
     this._config = { ...config };
+    this._autoEntity = undefined;
     this._html = "";
     this._sig = null;
     this._update();
@@ -550,11 +562,15 @@ class AlarmBase extends HTMLElement {
     return lang(this._hass, this._config);
   }
 
+  // Without a configured entity, the first alarm panel (alphabetically) is used; the scan of every state is
+  // memoized, and redone only if the chosen entity disappears.
   _entityId() {
     if (this._config.entity) return this._config.entity;
-    return Object.keys(this._hass.states)
+    if (this._autoEntity && this._hass.states[this._autoEntity]) return this._autoEntity;
+    this._autoEntity = Object.keys(this._hass.states)
       .filter((id) => id.startsWith("alarm_control_panel."))
       .sort()[0];
+    return this._autoEntity;
   }
 
   _panel() {
@@ -580,6 +596,7 @@ class AlarmBase extends HTMLElement {
 
   _update(sig) {
     if (!this._hass || !this._config) return;
+    if (this.isConnected) this._startClock();
     this._sig = sig ?? this._signature();
     let html = this._render();
     if (this._confirm) html = html.replace(/<ha-card([^>]*)>([\s\S]*)<\/ha-card>\s*$/, (_, _attrs, inner) => `<ha-card class="dialog-open">${inner}${this._confirmHtml()}</ha-card>`);
@@ -804,12 +821,16 @@ class AlarmBase extends HTMLElement {
       if (withBar && rem.total) out.push(`<div class="bar ${stateClass(st.state)}"><div style="width:${((100 * rem.left) / rem.total).toFixed(1)}%"></div></div>`);
     }
     const open = entityList(a.open_sensors);
-    if (open.length)
+    if (open.length) {
+      // Each name opens its own sensor's more-info: the names are spliced, already marked up, into the
+      // escaped translated line through a placeholder no translation can contain.
+      const names = open
+        .map((id) => `<span class="clickable" role="button" tabindex="0" data-entity="${esc(id)}">${esc(this._sensorName(id))}</span>`)
+        .join(", ");
       out.push(
-        `<div class="alert-line ${st.state === "triggered" ? "alarm" : "wait"} clickable" role="button" tabindex="0" data-entity="${esc(open[0])}">${svgIcon(ICONS.alert)}<span>${esc(
-          this._t("open_sensors", { list: open.map((id) => this._sensorName(id)).join(", ") })
-        )}</span></div>`
+        `<div class="alert-line ${st.state === "triggered" ? "alarm" : "wait"}">${svgIcon(ICONS.alert)}<span>${esc(this._t("open_sensors", { list: "\u0000" })).replace("\u0000", names)}</span></div>`
       );
+    }
     const bypassed = entityList(a.bypassed_sensors);
     if (bypassed.length)
       out.push(`<div class="line">${svgIcon(ICONS.shield_off)}<span>${esc(this._t("bypassed", { list: bypassed.map((id) => this._sensorName(id)).join(", ") }))}</span></div>`);
@@ -916,7 +937,8 @@ class AlarmCard extends AlarmBase {
   }
 
   getCardSize() {
-    return 5 + Math.ceil(this._sensors?.().length / 2 || 0);
+    // HA may ask before setConfig: no config yet, answer the bare card's size.
+    return this._config ? 5 + Math.ceil(this._sensors().length / 2) : 5;
   }
 
   getGridOptions() {
