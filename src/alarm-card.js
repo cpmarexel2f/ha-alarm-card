@@ -67,6 +67,7 @@ const STRINGS = {
     arming_in: "Armed in {d}",
     pending_in: "Alarm in {d}",
     open_sensors: "Open: {list}",
+    unavailable_sensors: "Unavailable: {list}",
     open_confirm: "{list}: open. Arm {mode} anyway?",
     bypassed: "Bypassed: {list}",
     last_triggered: "Last triggered {when}",
@@ -137,6 +138,7 @@ const STRINGS = {
     arming_in: "Armée dans {d}",
     pending_in: "Alarme dans {d}",
     open_sensors: "Ouvert : {list}",
+    unavailable_sensors: "Indisponible : {list}",
     open_confirm: "{list} : ouvert. Armer en mode {mode} quand même ?",
     bypassed: "Exclus : {list}",
     last_triggered: "Dernier déclenchement {when}",
@@ -205,6 +207,7 @@ const STRINGS = {
     arming_in: "Aktiviert in {d}",
     pending_in: "Alarm in {d}",
     open_sensors: "Offen: {list}",
+    unavailable_sensors: "Nicht verfügbar: {list}",
     open_confirm: "{list}: offen. Trotzdem „{mode}“ aktivieren?",
     bypassed: "Überbrückt: {list}",
     last_triggered: "Zuletzt ausgelöst {when}",
@@ -273,6 +276,7 @@ const STRINGS = {
     arming_in: "Armada en {d}",
     pending_in: "Alarma en {d}",
     open_sensors: "Abierto: {list}",
+    unavailable_sensors: "No disponible: {list}",
     open_confirm: "{list}: abierto. ¿Armar en modo «{mode}» de todos modos?",
     bypassed: "Excluidos: {list}",
     last_triggered: "Último disparo {when}",
@@ -402,11 +406,16 @@ const stateIcon = (state) => {
   return ICONS.shield_check;
 };
 
+// The `modes` option with the optional arm_ prefix added and duplicates removed ("away" and "arm_away" are one
+// mode). Anything but a list is returned as is.
+const armModes = (modes) =>
+  Array.isArray(modes) ? [...new Set(modes.map((m) => (String(m).startsWith("arm_") ? String(m) : `arm_${m}`)))] : modes;
+
 // Arm modes the panel supports, in button order, narrowed to `modes` when set.
 const supportedModes = (stateObj, modes) => {
   const f = Number(stateObj?.attributes?.supported_features) || 0;
   const all = MODES.filter(([, bit]) => f & bit).map(([m]) => m);
-  const wanted = (Array.isArray(modes) ? modes : []).map((m) => (m.startsWith("arm_") ? m : `arm_${m}`));
+  const wanted = Array.isArray(modes) ? armModes(modes) : [];
   return wanted.length ? wanted.filter((m) => all.includes(m)) : all;
 };
 
@@ -972,17 +981,25 @@ class AlarmBase extends HTMLElement {
       out.push(`<div class="line">${svgIcon(ICONS.timer)}<span>${esc(this._t(key, { d: fmtCountdown(rem.left) }))}</span></div>`);
       if (withBar && rem.total) out.push(`<div class="bar ${stateClass(st.state)}"><div style="width:${((100 * rem.left) / rem.total).toFixed(1)}%"></div></div>`);
     }
-    const open = entityList(a.open_sensors);
-    if (open.length) {
-      // Each name opens its own sensor's more-info: the names are spliced, already marked up, into the
-      // escaped translated line through a placeholder no translation can contain.
-      const names = open
+    // Alarmo also lists unavailable sensors (or ones deleted/renamed since its setup) in open_sensors: they
+    // block arming like open ones, but get their own "Unavailable" line instead of being called open.
+    const reported = entityList(a.open_sensors);
+    const isGone = (id) => {
+      const s = a.open_sensors && !Array.isArray(a.open_sensors) ? a.open_sensors[id] : this._hass.states[id]?.state;
+      return s === undefined || s === null || s === "unavailable" || s === "unknown";
+    };
+    const unavailable = reported.filter(isGone);
+    const open = reported.filter((id) => !isGone(id));
+    // Each name opens its own sensor's more-info: the names are spliced, already marked up, into the
+    // escaped translated line through a placeholder no translation can contain.
+    const sensorLine = (ids, key, cls) => {
+      const names = ids
         .map((id) => `<span class="clickable" role="button" tabindex="0" data-entity="${esc(id)}">${esc(this._sensorName(id))}</span>`)
         .join(", ");
-      out.push(
-        `<div class="alert-line ${st.state === "triggered" ? "alarm" : "wait"}">${svgIcon(ICONS.alert)}<span>${esc(this._t("open_sensors", { list: "\u0000" })).replace("\u0000", names)}</span></div>`
-      );
-    }
+      out.push(`<div class="alert-line ${cls}">${svgIcon(ICONS.alert)}<span>${esc(this._t(key, { list: "\u0000" })).replace("\u0000", names)}</span></div>`);
+    };
+    if (open.length) sensorLine(open, "open_sensors", st.state === "triggered" ? "alarm" : "wait");
+    if (unavailable.length) sensorLine(unavailable, "unavailable_sensors", "wait");
     const bypassed = entityList(a.bypassed_sensors);
     if (bypassed.length)
       out.push(`<div class="line">${svgIcon(ICONS.shield_off)}<span>${esc(this._t("bypassed", { list: bypassed.map((id) => this._sensorName(id)).join(", ") }))}</span></div>`);
@@ -1346,6 +1363,8 @@ class AlarmEditorBase extends HTMLElement {
       this.appendChild(this._form);
     }
     const data = { ...this._config, sensors: normalize(this._config.sensors).map((s) => s.entity) };
+    // The selector's values carry the arm_ prefix, optional in YAML: without it nothing would be checked.
+    if (data.modes !== undefined) data.modes = armModes(data.modes);
     for (const [name, def] of toggles) if (data[name] === undefined) data[name] = def;
     if (!data.entity) data.entity = AlarmCard.getStubConfig(this._hass).entity;
     this._form.hass = this._hass;
