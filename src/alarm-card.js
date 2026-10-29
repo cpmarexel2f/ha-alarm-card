@@ -104,6 +104,7 @@ const STRINGS = {
     modes: "Arm modes shown (all supported ones when empty)",
     sensors_option: "Sensors to display",
     show_logo: "Show logo",
+    show_controls: "Show arm / disarm buttons",
     show_sensors: "Show sensors",
     show_info: "Show last trigger and who changed it",
     confirm_disarm: "Ask for confirmation before disarming",
@@ -171,6 +172,7 @@ const STRINGS = {
     modes: "Modes affichés (tous ceux pris en charge si vide)",
     sensors_option: "Capteurs à afficher",
     show_logo: "Afficher le logo",
+    show_controls: "Afficher les boutons d'armement",
     show_sensors: "Afficher les capteurs",
     show_info: "Afficher le dernier déclenchement et l'auteur",
     confirm_disarm: "Demander confirmation avant de désarmer",
@@ -185,25 +187,25 @@ const STRINGS = {
   },
   de: {
     title: "Alarmanlage",
-    disarm: "Unscharf schalten",
+    disarm: "Deaktivieren",
     arm_home: "Zuhause",
     arm_away: "Abwesend",
     arm_night: "Nacht",
     arm_vacation: "Urlaub",
-    arm_custom_bypass: "Benutzerdefiniert",
+    arm_custom_bypass: "Mit Bypass",
     cancel: "Abbrechen",
     ok: "OK",
-    arm_anyway: "Trotzdem scharf schalten",
+    arm_anyway: "Trotzdem aktivieren",
     code_for: "Code für „{action}“",
     code_placeholder: "Code",
     clear: "Löschen",
     since: "seit {d}",
     just_now: "gerade eben",
     by: "von {name}",
-    arming_in: "Scharf in {d}",
+    arming_in: "Aktiviert in {d}",
     pending_in: "Alarm in {d}",
     open_sensors: "Offen: {list}",
-    open_confirm: "{list}: offen. Trotzdem „{mode}“ scharf schalten?",
+    open_confirm: "{list}: offen. Trotzdem „{mode}“ aktivieren?",
     bypassed: "Überbrückt: {list}",
     last_triggered: "Zuletzt ausgelöst {when}",
     never_triggered: "Noch nie ausgelöst",
@@ -221,15 +223,15 @@ const STRINGS = {
     d: "Tg.",
     no_alarm: "Keine Alarmanlage gefunden.",
     unknown_entity: "Alarmanlage nicht gefunden",
-    s_disarmed: "Unscharf",
-    s_armed_home: "Scharf (Zuhause)",
-    s_armed_away: "Scharf (Abwesend)",
-    s_armed_night: "Scharf (Nacht)",
-    s_armed_vacation: "Scharf (Urlaub)",
-    s_armed_custom_bypass: "Scharf (Benutzerdefiniert)",
-    s_arming: "Wird scharf geschaltet",
-    s_disarming: "Wird unscharf geschaltet",
-    s_pending: "Eintrittsverzögerung",
+    s_disarmed: "Deaktiviert",
+    s_armed_home: "Aktiviert (Zuhause)",
+    s_armed_away: "Aktiviert (Abwesend)",
+    s_armed_night: "Aktiviert (Nacht)",
+    s_armed_vacation: "Aktiviert (Urlaub)",
+    s_armed_custom_bypass: "Aktiviert (Mit Bypass)",
+    s_arming: "Wird aktiviert",
+    s_disarming: "Wird deaktiviert",
+    s_pending: "Anstehend",
     s_triggered: "Ausgelöst",
     s_unavailable: "Nicht verfügbar",
     s_unknown: "Unbekannt",
@@ -238,9 +240,10 @@ const STRINGS = {
     modes: "Angezeigte Modi (alle unterstützten, wenn leer)",
     sensors_option: "Anzuzeigende Sensoren",
     show_logo: "Logo anzeigen",
+    show_controls: "Schaltflächen zum Aktivieren/Deaktivieren anzeigen",
     show_sensors: "Sensoren anzeigen",
     show_info: "Letzte Auslösung und Urheber der Änderung anzeigen",
-    confirm_disarm: "Vor dem Unscharfschalten nachfragen",
+    confirm_disarm: "Vor dem Deaktivieren nachfragen",
     collapsed: "Sensoren standardmäßig einklappen",
     zoom: "Detail-Schaltfläche",
     zoom_helper: "Schaltfläche oben rechts, die die Mini-Karte zur vollständigen Karte umschaltet und zurück",
@@ -248,7 +251,7 @@ const STRINGS = {
     zoom_out: "Zurück zur Kompaktansicht",
     language: "Sprache",
     lang_auto: "Automatisch",
-    disarm_confirm: "Alarmanlage unscharf schalten?",
+    disarm_confirm: "Alarmanlage deaktivieren?",
   },
   es: {
     title: "Alarma",
@@ -292,7 +295,7 @@ const STRINGS = {
     s_armed_home: "Armada en casa",
     s_armed_away: "Armada ausente",
     s_armed_night: "Armada noche",
-    s_armed_vacation: "Armada vacaciones",
+    s_armed_vacation: "Armada de vacaciones",
     s_armed_custom_bypass: "Armada personalizada",
     s_arming: "Armando",
     s_disarming: "Desarmando",
@@ -305,6 +308,7 @@ const STRINGS = {
     modes: "Modos mostrados (todos los compatibles si está vacío)",
     sensors_option: "Sensores a mostrar",
     show_logo: "Mostrar el logotipo",
+    show_controls: "Mostrar los botones de armado",
     show_sensors: "Mostrar los sensores",
     show_info: "Mostrar el último disparo y quién cambió el estado",
     confirm_disarm: "Pedir confirmación antes de desarmar",
@@ -384,8 +388,9 @@ const stateClass = (state) => {
   if (s === "disarmed") return "off";
   if (s === "triggered") return "alarm";
   if (/^(arming|pending|disarming)$/.test(s)) return "wait";
-  if (s.startsWith("armed_")) return s.slice(6).replace("custom_bypass", "custom");
-  return "idle";
+  // Only the known modes: the result goes unescaped into class attributes.
+  const mode = s.startsWith("armed_") ? s.slice(6).replace("custom_bypass", "custom") : "";
+  return /^(home|away|night|vacation|custom)$/.test(mode) ? mode : "idle";
 };
 
 const stateIcon = (state) => {
@@ -873,7 +878,7 @@ class AlarmBase extends HTMLElement {
   _send(mode, code, force = false) {
     const entity_id = this._entityId();
     if (force && mode !== "disarm" && this._isAlarmo())
-      return this._call("alarmo", "arm", { entity_id, mode: mode.slice(4), force: true, ...(code ? { code } : {}) });
+      return this._call("alarmo", "arm", { entity_id, mode: mode.slice(4).replace("custom_bypass", "custom"), force: true, ...(code ? { code } : {}) });
     return this._call("alarm_control_panel", `alarm_${mode}`, { entity_id, ...(code ? { code } : {}) });
   }
 
@@ -919,7 +924,7 @@ class AlarmBase extends HTMLElement {
     return String(st?.state ?? "");
   }
 
-  // "for 2 h 05 · by Julien".
+  // "for 2 h 05 · by Alex".
   _subtitle(st) {
     const tr = (k) => this._t(k);
     const bits = [];
@@ -940,7 +945,7 @@ class AlarmBase extends HTMLElement {
           <div class="name">${esc(c.title || st.attributes?.friendly_name || this._t("title"))}</div>
           <div class="sub">${esc(this._subtitle(st))}</div>
         </div>
-        <span class="chip clickable ${cls}" role="button" tabindex="0" data-entity="${esc(st.entity_id)}"><span class="dot"></span>${esc(this._stateText(st))}</span>
+        <span class="chip clickable ${cls}" role="button" tabindex="0" data-entity="${esc(st.entity_id)}" title="${esc(this._stateText(st))}"><span class="dot"></span><span class="chip-text">${esc(this._stateText(st))}</span></span>
         ${this._zoomButton()}
       </div>`;
   }
@@ -1042,6 +1047,9 @@ class AlarmBase extends HTMLElement {
 
 const FULL_STYLE = `
   .content { padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+  /* Long state labels (German) shrink with an ellipsis instead of squeezing the title out. */
+  .header .chip { flex: 0 1 auto; min-width: 0; max-width: 50%; }
+  .header .chip-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .hero { display: flex; align-items: center; gap: 14px; }
   .hero .shield { width: 72px; height: 72px; }
   .hero .shield .icon { width: 40px; height: 40px; }
@@ -1365,8 +1373,11 @@ class AlarmMiniCardEditor extends AlarmEditorBase {
     return [
       ["show_logo", true],
       ["show_controls", true],
+      // Both apply to the zoomed view, which renders the full card with the same options.
+      ["show_sensors", true],
       ["show_info", true],
       ["confirm_disarm", false],
+      ["collapsed", false],
       ["zoom", true],
     ];
   }

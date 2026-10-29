@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0 — 2026-10-29
+### Changes
+- German labels use Home Assistant's own alarm terminology ("Aktiviert (Abwesend)", "Deaktiviert", "Wird aktiviert", "Anstehend", "Mit Bypass"…) instead of "scharf / unscharf", so the card matches the more-info dialog; Spanish "Armada de vacaciones" likewise.
+- The mini card's visual editor offers "Show sensors" and "Fold the sensors by default", which apply to its zoomed view.
+
+### Fixes
+- "Arm anyway" with an open sensor in **Custom** mode on Alarmo now actually arms (Alarmo's `custom` mode is sent instead of `custom_bypass`, which its service refused).
+- The visual editor's "Show arm / disarm buttons" toggle is labelled in every language instead of showing `show_controls`.
+- Long state labels (German) in the full card's header shrink with an ellipsis instead of squeezing the title out.
+- Only known arm modes are used as the state's color class.
+
+### Maintenance
+- CI: screenshots workflow safe on fork pull requests, apt retries fail explicitly; after pushing refreshed screenshots it re-runs Lint, Validate and HACS on the pull request branch (a GITHUB_TOKEN push does not trigger them); Playwright range aligned on 1.64.1.
+
 ## 1.3.0 — 2026-10-28
 ### Changes
 - German and Spanish translations: both cards and the visual editor in `de` and `es` (auto-detected from Home Assistant or forced with `language`), with Deutsch and Español in the editor's language selector.
